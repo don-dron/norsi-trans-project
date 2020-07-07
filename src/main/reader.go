@@ -1,10 +1,12 @@
 package main
 
 import (
+	"encoding/csv"
 	"fmt"
+	"io"
+	"log"
 	"os"
 	"strconv"
-	"strings"
 	"time"
 )
 
@@ -17,28 +19,43 @@ type Email struct {
 	size      uint64
 }
 
-func ReadCSV(path string) [][]string {
-	file, err := os.Open(path)
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
-	defer file.Close()
-
-	stat, _ := file.Stat()
-
-	bs := make([]byte, stat.Size())
-	_, err = file.Read(bs)
-
+func ReadCSV(path string, offset int, stringCount int) [][]string {
 	result := make([][]string, 0)
 
-	data := string(bs)
+	csvFile, err := os.Open(path)
 
-	strArray := strings.Split(data, "\n")
-
-	for _, s := range strArray {
-		result = append(result, strings.Split(s, " "))
+	if err != nil {
+		panic(err)
 	}
+
+	r := csv.NewReader(csvFile)
+	r.Comma = ','
+
+	start := time.Now()
+	n := 0
+	for {
+		record, err := r.Read()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		n++
+
+		if n > offset+stringCount {
+			break
+		}
+		if n > offset {
+			result = append(result, record)
+		}
+	}
+
+	elapsed := time.Now().Sub(start)
+	diff := elapsed.Milliseconds()
+	fmt.Print("Reader time ")
+	fmt.Println(diff)
 
 	return result
 }

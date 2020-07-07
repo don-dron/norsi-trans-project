@@ -4,12 +4,13 @@ import (
 	"fmt"
 	"log"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/gocql/gocql"
 )
 
-func writeData(emails []Email) {
+func writeData() {
 	cluster := gocql.NewCluster("127.0.0.1")
 	cluster.Consistency = gocql.Quorum
 	cluster.ProtoVersion = 4
@@ -47,103 +48,97 @@ func writeData(emails []Email) {
 
 	concurrecy := false
 
-	// var ops uint64 = 0
-	n := 1024
-	var wg sync.WaitGroup
-	errs := make(chan error)
-	start := time.Now()
+	var ops uint64 = 0
 
-	if concurrecy {
-		wg.Add(n)
-		queue := NewQueue()
+	offset := 0
+	page_size := 1000000
 
-		for _, e := range emails {
-			queue.Enqueue(&e)
-		}
+	emails := CreateEmails(ReadCSV("test_data.csv", offset, page_size))
 
-		start = time.Now()
-		query := "INSERT INTO test.test (dt,target,contact,direction,subject,size) VALUES( toTimeStamp(now()),?,?,?,?,?)"
-		for i := 0; i < n; i++ {
-			go func() {
-				defer wg.Done()
-				for {
-					e, ok := queue.Dequeue().(*Email)
+	for len(emails) != 0 {
+		n := 1024
+		var wg sync.WaitGroup
+		errs := make(chan error)
+		start := time.Now()
 
-					if !ok {
-						return
-					}
+		if concurrecy {
+			wg.Add(n)
+			queue := NewQueue(len(emails))
 
-					err := session.Query(query, e.target, e.contact, e.direction, e.subject, e.size).Exec()
-
-					if err != nil {
-						errs <- err
-						return
-					}
-					// atomic.AddUint64(&ops, 1)
-					// fmt.Println(ops)
-				}
-			}()
-		}
-
-	} else {
-		n = 1024
-		wg.Add(n)
-		size := len(emails)
-
-		cellSize := size / n
-		if size%n > 0 {
-			cellSize++
-		}
-		start = time.Now()
-		query := "INSERT INTO test.test (dt,target,contact,direction,subject,size) VALUES( toTimeStamp(now()),?,?,?,?,?)"
-		for i := 0; i < n-1; i++ {
-			go func(index int) {
-				defer wg.Done()
-
-				finish := (index + 1) * cellSize
-
-				for j := index * cellSize; j < finish; j++ {
-					e := emails[j]
-
-					err := session.Query(query, e.target, e.contact, e.direction, e.subject, e.size).Exec()
-
-					if err != nil {
-						errs <- err
-					}
-
-					// atomic.AddUint64(&ops, 1)
-					// fmt.Println(ops)
-				}
-			}(i)
-		}
-
-		go func(index int) {
-			defer wg.Done()
-
-			finish := (index + 1) * cellSize
-
-			for j := index * cellSize; j < finish && j < size; j++ {
-				e := emails[j]
-
-				err := session.Query(query, e.target, e.contact, e.direction, e.subject, e.size).Exec()
-
-				if err != nil {
-					errs <- err
-				}
-				// atomic.AddUint64(&ops, 1)
-				// fmt.Println(ops)
+			for _, e := range emails {
+				queue.Enqueue(&e)
 			}
-		}(n - 1)
-	}
 
-	wg.Wait()
-	elapsed := time.Now().Sub(start)
-	fmt.Println(elapsed.Milliseconds())
-	close(errs)
+			start = time.Now()
+			query := "INSERT INTO test.test (dt,target,contact,direction,subject,size) VALUES( toTimeStamp(now()),?,?,?,?,?)"
+			for i := 0; i < n; i++ {
+				go func() {
+					defer wg.Done()
+					for {
+						i, ok := queue.Dequeue()
 
-	for err := range errs {
-		if err != nil {
-			log.Println(err)
+						if !ok {
+							return
+						}
+						e := i.(*Email)
+						err := session.Query(query, e.target, e.contact, e.direction, e.subject, e.size).Exec()
+
+						if err != nil {
+							errs <- err
+							return
+						}
+						atomic.AddUint64(&ops, 1)
+					}
+				}()
+			}
+
+		} else {
+			n = 1024
+			wg.Add(n)
+			size := len(emails)
+
+			cellSize := size / n
+			if size%n > 0 {
+				cellSize++
+			}
+			start = time.Now()
+			query := "INSERT INTO test.test (dt,target,contact,direction,subject,size) VALUES( toTimeStamp(now()),?,?,?,?,?)"
+			for i := 0; i < n; i++ {
+				go func(index int) {
+					defer wg.Done()
+
+					finish := (index + 1) * cellSize
+
+					for j := index * cellSize; j < finish && j < size; j++ {
+						e := emails[j]
+
+						err := session.Query(query, e.target, e.contact, e.direction, e.subject, e.size).Exec()
+
+						if err != nil {
+							errs <- err
+						}
+
+						atomic.AddUint64(&ops, 1)
+					}
+				}(i)
+			}
 		}
+
+		wg.Wait()
+		elapsed := time.Now().Sub(start)
+		diff := elapsed.Nanoseconds()
+		fmt.Print(ops)
+		fmt.Println(" Queries")
+
+		fmt.Print(diff / int64(ops))
+		fmt.Println(" nanoseconds time slise for one query")
+		close(errs)
+		for err := range errs {
+			if err != nil {
+				log.Println(err)
+			}
+		}
+		offset += page_size
+		emails = CreateEmails(ReadCSV("test_data.csv", offset, page_size))
 	}
 }
