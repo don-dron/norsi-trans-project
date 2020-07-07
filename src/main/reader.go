@@ -28,6 +28,10 @@ func ReadCSV(path string, offset int, stringCount int) [][]string {
 		panic(err)
 	}
 
+	if err != nil {
+		panic(err)
+	}
+
 	r := csv.NewReader(csvFile)
 	r.Comma = ','
 

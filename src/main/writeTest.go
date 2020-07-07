@@ -46,8 +46,6 @@ func writeData() {
 	// С массивом быстрее на 2 секунды на 1 000 000 данных
 	//
 
-	concurrecy := false
-
 	offset := 0
 	page_size := 1000000
 
@@ -60,6 +58,7 @@ func writeData() {
 		errs := make(chan error)
 		start := time.Now()
 
+		concurrecy := true
 		if concurrecy {
 			wg.Add(n)
 			queue := NewQueue(len(emails))
@@ -92,7 +91,6 @@ func writeData() {
 			}
 
 		} else {
-			n = 1024
 			wg.Add(n)
 			size := len(emails)
 
@@ -100,7 +98,7 @@ func writeData() {
 			if size%n > 0 {
 				cellSize++
 			}
-			start = time.Now()
+
 			query := "INSERT INTO test.test (dt,target,contact,direction,subject,size) VALUES( toTimeStamp(now()),?,?,?,?,?)"
 			for i := 0; i < n; i++ {
 				go func(index int) {

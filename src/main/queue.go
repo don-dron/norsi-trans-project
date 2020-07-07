@@ -49,7 +49,7 @@ retry:
 	var cnt uint32
 	if putPos >= getPos {
 		cnt = putPos - getPos
-	} else { // putPos < getPos when putPos exceed uint32 boundary
+	} else {
 		cnt = (putPos - getPos) + capacityMod
 	}
 
@@ -86,7 +86,7 @@ retry:
 	var cnt uint32
 	if putPos >= getPos {
 		cnt = putPos - getPos
-	} else { // putPos < getPos when putPos exceed uint32 boundary
+	} else {
 		cnt = (putPos - getPos) + capacityMod
 	}
 
@@ -121,7 +121,7 @@ func (q *Queue) Size() int {
 	var cnt uint32
 	if putPos >= getPos {
 		cnt = putPos - getPos
-	} else { // putPos < getPos when putPos exceed uint32 boundary
+	} else {
 		cnt = (putPos - getPos) + q.capacityMod
 	}
 	return int(cnt)
