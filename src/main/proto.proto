@@ -1,0 +1,25 @@
+syntax = "proto3";
+package main;
+
+message ProtoTest {
+  string field0 = 1;
+  string field1 = 1;
+  string field2 = 1;
+  string field3 = 1;
+  string field4 = 1;
+  string field5 = 1;
+  string field6 = 1;
+  string field7 = 1;
+  string field8 = 1;
+  string field9 = 1;
+  int32 size0 = 1;
+  int32 size1 = 1;
+  int32 size2 = 1;
+  int32 size3 = 1;
+  int32 size4 = 1;
+  int32 size5 = 1;
+  int32 size6 = 1;
+  int32 size7 = 1;
+  int32 size8 = 1;
+  int32 size9 = 1;
+}

@@ -87,6 +87,7 @@ func createTestData(dataPath string, dataCount int, dataCreator func() []string)
 			write(rows)
 		}()
 	}
+
 	wg.Wait()
 
 	elapsed := time.Now().Sub(start)
