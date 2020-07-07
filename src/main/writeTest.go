@@ -58,8 +58,7 @@ func writeData(dataPath string, queryFormat string, DataBuilder func([][]string)
 		var wg sync.WaitGroup
 		start := time.Now()
 
-		/// Переписал очередь, теперь в ней инвалидации кэшей и false sharing , она побеждает вариант с массивом
-		concurrecy := true
+		concurrecy := false
 		if concurrecy {
 			wg.Add(n)
 			queue := NewQueue(len(emails))
