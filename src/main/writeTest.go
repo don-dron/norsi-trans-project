@@ -48,14 +48,13 @@ func writeData() {
 
 	concurrecy := false
 
-	var ops uint64 = 0
-
 	offset := 0
 	page_size := 1000000
 
 	emails := CreateEmails(ReadCSV("test_data.csv", offset, page_size))
 
 	for len(emails) != 0 {
+		var ops uint64 = 0
 		n := 1024
 		var wg sync.WaitGroup
 		errs := make(chan error)
