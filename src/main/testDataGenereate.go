@@ -59,7 +59,7 @@ func createTestData() {
 
 	csvWriter = csv.NewWriter(io.Writer(file))
 	csvWriter.Comma = ','
-	n := 50000000
+	n := 5000 //0000
 	w := 1000
 	var wg sync.WaitGroup
 
@@ -74,11 +74,12 @@ func createTestData() {
 
 			rows := make([][]string, 0)
 			for i := 0; i < n; i++ {
-				str := make([]string, 4)
-				str[0] = names[rand.Intn(len(names))]
-				str[1] = names[rand.Intn(len(names))]
-				str[2] = "SubjectStart" + names[rand.Intn(len(names))] + names[rand.Intn(len(names))] + "SubjectEnd"
-				str[3] = strconv.Itoa(rand.Intn(len(names)))
+				str := make([]string, 5)
+				str[0] = names[rand.Intn(len(names))] + strconv.Itoa(rand.Intn(len(names)))
+				str[1] = names[rand.Intn(len(names))] + strconv.Itoa(rand.Intn(len(names)))
+				str[2] = "true"
+				str[3] = "SubjectStart" + names[rand.Intn(len(names))] + names[rand.Intn(len(names))] + "SubjectEnd"
+				str[4] = strconv.Itoa(rand.Intn(len(names)))
 
 				rows = append(rows, str)
 
