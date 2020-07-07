@@ -6,7 +6,6 @@ import (
 	"io"
 	"math/rand"
 	"os"
-	"strconv"
 	"sync"
 	"time"
 )
@@ -46,12 +45,12 @@ var names []string = []string{
 var mu sync.Mutex
 var csvWriter *csv.Writer
 
-func createTestData() {
-	file, err := os.Create("test_data.csv")
+func createTestData(dataPath string, dataCount int, dataCreator func() []string) {
+	file, err := os.Create(dataPath)
 	rand.Seed(time.Now().UnixNano())
 
 	if err != nil {
-		fmt.Println("Unable to create file:1", err)
+		fmt.Println("Unable to create file:", err)
 		os.Exit(1)
 	}
 
@@ -59,11 +58,12 @@ func createTestData() {
 
 	csvWriter = csv.NewWriter(io.Writer(file))
 	csvWriter.Comma = ','
-	n := 50000000
+
 	w := 1000
 	var wg sync.WaitGroup
 
 	goroutines := 10
+	n := dataCount
 
 	wg.Add(goroutines)
 
@@ -74,11 +74,7 @@ func createTestData() {
 
 			rows := make([][]string, 0)
 			for i := 0; i < n; i++ {
-				str := make([]string, 4)
-				str[0] = names[rand.Intn(len(names))]
-				str[1] = names[rand.Intn(len(names))]
-				str[2] = "SubjectStart" + names[rand.Intn(len(names))] + names[rand.Intn(len(names))] + "SubjectEnd"
-				str[3] = strconv.Itoa(rand.Intn(len(names)))
+				str := dataCreator()
 
 				rows = append(rows, str)
 
@@ -91,6 +87,7 @@ func createTestData() {
 			write(rows)
 		}()
 	}
+
 	wg.Wait()
 
 	elapsed := time.Now().Sub(start)
