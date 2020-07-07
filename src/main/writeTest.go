@@ -58,6 +58,7 @@ func writeData() {
 		errs := make(chan error)
 		start := time.Now()
 
+		/// Переписал очередь, теперь в ней инвалидации кэшей и false sharing , она побежает вариант с массивом
 		concurrecy := true
 		if concurrecy {
 			wg.Add(n)
