@@ -2,6 +2,7 @@ package main
 
 import (
 	"math/rand"
+	"os"
 	"strconv"
 
 	"github.com/gocql/gocql"
@@ -9,7 +10,12 @@ import (
 
 func main() {
 	createTest := false
-	testType := 3
+	testType := 1
+
+	if len(os.Args) != 0 {
+		testType := strconv.FormatInt(os.Args[0])
+		createTest := strconv.FormatBool(os.Args[1])
+	}
 
 	if testType == 1 {
 		if createTest {
