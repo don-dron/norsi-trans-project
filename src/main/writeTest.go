@@ -10,7 +10,7 @@ import (
 	"github.com/gocql/gocql"
 )
 
-func createTableAndKeySpace() {
+func createTableAndKeySpace(keySpaceFormat string, tableFormat string) {
 	cluster := gocql.NewCluster("127.0.0.1")
 	cluster.Consistency = gocql.Quorum
 	cluster.ProtoVersion = 4
@@ -22,13 +22,13 @@ func createTableAndKeySpace() {
 	}
 	defer session.Close()
 
-	err = session.Query("CREATE KEYSPACE IF NOT EXISTS test WITH REPLICATION = {'class' : 'SimpleStrategy', 'replication_factor' : 1};").Exec()
+	err = session.Query(keySpaceFormat).Exec()
 	if err != nil {
 		log.Println(err)
 		return
 	}
 
-	err = session.Query("CREATE TABLE IF NOT EXISTS test.test (dt timestamp,target text,contact text,direction boolean,subject text,size int,PRIMARY KEY (target, dt, direction));").Exec()
+	err = session.Query(tableFormat).Exec()
 
 	if err != nil {
 		log.Println(err)
@@ -117,6 +117,7 @@ func writeData(dataPath string, queryFormat string, DataBuilder func([][]string)
 						}
 
 						atomic.AddUint64(&ops, 1)
+						fmt.Println(ops)
 					}
 				}(i)
 			}
