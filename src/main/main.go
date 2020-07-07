@@ -9,7 +9,7 @@ import (
 
 func main() {
 	createTest := false
-	testType := 2
+	testType := 3
 
 	if testType == 1 {
 		if createTest {
@@ -108,6 +108,48 @@ func main() {
 					u19, _ := strconv.ParseUint(strs[19], 10, 64)
 
 					return session.Query(format, strs[0], strs[1], strs[2], strs[3], strs[4], strs[5], strs[6], strs[7], strs[8], strs[9], u10, u11, u12, u13, u14, u15, u16, u17, u18, u19)
+				})
+		}
+	} else if testType == 3 {
+		if createTest {
+			createTestData("test_data2.csv", 100000, func() []string {
+				str := make([]string, 20)
+				for i := 0; i < 10; i++ {
+					str[i] = names[rand.Intn(len(names))] + strconv.Itoa(rand.Intn(len(names)))
+				}
+				for i := 10; i < 20; i++ {
+					str[i] = strconv.Itoa(rand.Intn(len(names)))
+				}
+
+				return str
+			})
+		} else {
+			createTableAndKeySpace("CREATE KEYSPACE IF NOT EXISTS test2 WITH REPLICATION = {'class' : 'SimpleStrategy', 'replication_factor' : 1};", "CREATE TABLE IF NOT EXISTS test2.test2(dt timestamp,data blob ,PRIMARY KEY (dt));")
+
+			writeData("test_data2.csv", // Path to data
+				"INSERT INTO test2.test2 (dt,data) VALUES( toTimeStamp(now()),textAsBlob(?))", // Query format
+				func(data [][]string) []Data { // Data builder
+					result := make([]Data, 0)
+
+					for _, array := range data {
+						newItem := Data{}
+						newItem.fields = make([]interface{}, 0)
+						for _, item := range array {
+							newItem.fields = append(newItem.fields, []byte(item))
+						}
+						result = append(result, newItem)
+					}
+
+					return result
+				},
+				func(session *gocql.Session, format string, fields []interface{}) *gocql.Query { // Query Builder
+					strg := ""
+
+					for _, k := range fields {
+						strg += string((k.([]byte))[:])
+					}
+
+					return session.Query(format, strg)
 				})
 		}
 	}
