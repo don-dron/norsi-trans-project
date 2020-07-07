@@ -58,7 +58,7 @@ func writeData(dataPath string, queryFormat string, DataBuilder func([][]string)
 		var wg sync.WaitGroup
 		start := time.Now()
 
-		concurrecy := false
+		concurrecy := true // Очередь новая , на ней быстрее
 		if concurrecy {
 			wg.Add(n)
 			queue := NewQueue(len(emails))
