@@ -10,11 +10,11 @@ import (
 
 func main() {
 	createTest := false
-	testType := 1
+	var testType int64 = 1
 
-	if len(os.Args) != 0 {
-		testType := strconv.FormatInt(os.Args[0])
-		createTest := strconv.FormatBool(os.Args[1])
+	if len(os.Args) > 1 {
+		testType, _ = strconv.ParseInt(os.Args[1], 10, 64)
+		createTest, _ = strconv.ParseBool(os.Args[2])
 	}
 
 	if testType == 1 {
