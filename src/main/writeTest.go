@@ -115,6 +115,7 @@ func writeData() {
 						err := session.Query(query, e.target, e.contact, e.direction, e.subject, e.size).Exec()
 
 						if err != nil {
+							log.Println(err)
 							errs <- err
 						}
 
