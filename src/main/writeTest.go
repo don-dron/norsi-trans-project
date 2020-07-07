@@ -36,6 +36,10 @@ func createTableAndKeySpace(keySpaceFormat string, tableFormat string) {
 	}
 }
 
+const (
+	pageSize int = 1000000
+)
+
 func writeData(dataPath string, queryFormat string, DataBuilder func([][]string) []Data, queryBuilder func(*gocql.Session, string, []interface{}) *gocql.Query) {
 	cluster := gocql.NewCluster("127.0.0.1")
 	cluster.Consistency = gocql.Quorum
@@ -48,9 +52,8 @@ func writeData(dataPath string, queryFormat string, DataBuilder func([][]string)
 	}
 	defer session.Close()
 	offset := 0
-	page_size := 1000000
 
-	emails := DataBuilder(ReadCSV(dataPath, offset, page_size))
+	emails := DataBuilder(ReadCSV(dataPath, offset, pageSize))
 
 	for len(emails) != 0 {
 		var ops uint64 = 0
@@ -132,7 +135,7 @@ func writeData(dataPath string, queryFormat string, DataBuilder func([][]string)
 		fmt.Print(diff / int64(ops))
 		fmt.Println(" nanoseconds time slise for one query")
 
-		offset += page_size
-		emails = DataBuilder(ReadCSV(dataPath, offset, page_size))
+		offset += pageSize
+		emails = DataBuilder(ReadCSV(dataPath, offset, pageSize))
 	}
 }
