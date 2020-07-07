@@ -86,7 +86,7 @@ func writeData(dataPath string, queryFormat string, DataBuilder func([][]string)
 							return
 						}
 						atomic.AddUint64(&ops, 1)
-						fmt.Println(ops)
+						// fmt.Println(ops)
 					}
 				}()
 			}
@@ -117,7 +117,7 @@ func writeData(dataPath string, queryFormat string, DataBuilder func([][]string)
 						}
 
 						atomic.AddUint64(&ops, 1)
-						fmt.Println(ops)
+						// fmt.Println(ops)
 					}
 				}(i)
 			}
