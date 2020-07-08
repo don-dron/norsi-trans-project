@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"runtime"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -53,24 +54,24 @@ func writeData(dataPath string, queryFormat string, DataBuilder func([][]string)
 	defer session.Close()
 	offset := 0
 
-	emails := DataBuilder(ReadCSV(dataPath, offset, pageSize))
-
+	emails := DataBuilder(ReadCSV(dataPath, offset, pageSize*2))
+	runtime.GOMAXPROCS(runtime.NumCPU())
 	for len(emails) != 0 {
 		var ops uint64 = 0
-		n := 1024
+		n := 1000
 		var wg sync.WaitGroup
 		start := time.Now()
 
 		concurrecy := true // Очередь новая , на ней быстрее
 		if concurrecy {
 			wg.Add(n)
+			//start = time.Now()
 			queue := NewQueue(len(emails))
 
 			for _, e := range emails {
 				queue.Enqueue(&e)
 			}
 
-			start = time.Now()
 			for i := 0; i < n; i++ {
 				go func() {
 					defer wg.Done()
@@ -131,6 +132,9 @@ func writeData(dataPath string, queryFormat string, DataBuilder func([][]string)
 		diff := elapsed.Nanoseconds()
 		fmt.Print(ops)
 		fmt.Println(" Queries")
+
+		fmt.Print(elapsed.Milliseconds())
+		fmt.Println(" All time")
 
 		fmt.Print(diff / int64(ops))
 		fmt.Println(" nanoseconds time slise for one query")
