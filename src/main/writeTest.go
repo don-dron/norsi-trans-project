@@ -19,7 +19,7 @@ type DataBuilder func([][]string) *Queue
 
 const (
 	// Чтение файлов по кускам очень плохо, в идеале нужно читать один раз , если файл большой, больше 10 млн строк, то читаем дальше , пока не дочитаем
-	pageSize int = 2000000
+	pageSize int = 1000000
 )
 
 func writeDataFromAnyFiles(dataPaths []string, queryFormat string, dataBuilder DataBuilder, queryBuilder QueryBuilder) {
@@ -51,7 +51,7 @@ func writeData(session *gocql.Session, dataPath string, queryFormat string, data
 
 func readCsvAndLoad(session *gocql.Session, queryFormat string, dataPath string, dataBuilder DataBuilder, queryBuilder QueryBuilder) {
 	offset := 0
-	emails := dataBuilder(ReadCSV(dataPath, offset, pageSize*2))
+	emails := dataBuilder(ReadCSV(dataPath, offset, pageSize))
 	runtime.GOMAXPROCS(runtime.NumCPU())
 	for emails.Size() != 0 {
 		var ops uint64 = 0
