@@ -20,7 +20,7 @@ func main() {
 
 	if testType == 1 {
 		if createTest {
-			createTestData("test_data.csv", 1000000, func() []string {
+			createTestData("test_data1.csv", 1000000, func() []string {
 				str := make([]string, 5)
 				str[0] = names[rand.Intn(len(names))] + strconv.Itoa(rand.Intn(len(names)))
 				str[1] = names[rand.Intn(len(names))] + strconv.Itoa(rand.Intn(len(names)))
@@ -32,10 +32,10 @@ func main() {
 		} else {
 			createTableAndKeySpace("CREATE KEYSPACE IF NOT EXISTS test WITH REPLICATION = {'class' : 'SimpleStrategy', 'replication_factor' : 1};", "CREATE TABLE IF NOT EXISTS test.test(dt timestamp,target text,contact text,direction boolean,subject text,size int,PRIMARY KEY (target, dt, direction));")
 
-			writeData("test_data.csv", // Path to data
+			writeDataFromAnyFiles([]string{"test_data1.csv"}, // Path to data
 				"INSERT INTO test.test (dt,target,contact,direction,subject,size) VALUES( toTimeStamp(now()),?,?,?,?,?)", // Query format
-				func(data [][]string) []Data { // Data builder
-					result := make([]Data, 0)
+				func(data [][]string) *Queue { // Data builder
+					queue := NewQueue(len(data))
 
 					for _, array := range data {
 						newItem := Data{}
@@ -43,10 +43,10 @@ func main() {
 						for _, item := range array {
 							newItem.fields = append(newItem.fields, []byte(item))
 						}
-						result = append(result, newItem)
+						queue.Enqueue(&newItem)
 					}
 
-					return result
+					return queue
 				},
 				func(session *gocql.Session, format string, fields []interface{}) *gocql.Query { // Query Builder
 					size := len(fields)
@@ -65,7 +65,7 @@ func main() {
 		createTableAndKeySpace("CREATE KEYSPACE IF NOT EXISTS test1 WITH REPLICATION = {'class' : 'SimpleStrategy', 'replication_factor' : 1};", "CREATE TABLE IF NOT EXISTS test1.test1(dt timestamp,field0 text,field1 text,field2 text,field3 text,field4 text,field5 text,field6 text,field7 text,field8 text,field9 text,size0 int,size1 int,size2 int,size3 int,size4 int,size5 int,size6 int,size7 int,size8 int,size9 int,PRIMARY KEY (dt,field0 ,field1 ,field2 ,field3 ,field4 ,field5 ,field6 ,field7 ,field8 ,field9 ,size0 ,size1 ,size2 ,size3 ,size4 ,size5 ,size6 ,size7 ,size8 ,size9));")
 
 		if createTest {
-			createTestData("test_data1.csv", 1000000, func() []string {
+			createTestData("test_data2.csv", 1000000, func() []string {
 				str := make([]string, 20)
 				for i := 0; i < 10; i++ {
 					str[i] = names[rand.Intn(len(names))] + strconv.Itoa(rand.Intn(len(names)))
@@ -79,10 +79,10 @@ func main() {
 		} else {
 			createTableAndKeySpace("CREATE KEYSPACE IF NOT EXISTS test1 WITH REPLICATION = {'class' : 'SimpleStrategy', 'replication_factor' : 1};", "CREATE TABLE IF NOT EXISTS test1.test1(dt timestamp,field0 text,field1 text,field2 text,field3 text,field4 text,field5 text,field6 text,field7 text,field8 text,field9 text,size0 int,size1 int,size2 int,size3 int,size4 int,size5 int,size6 int,size7 int,size8 int,size9 int,PRIMARY KEY (dt));")
 
-			writeData("test_data1.csv", // Path to data
+			writeDataFromAnyFiles([]string{"test_data2.csv"}, // Path to data
 				"INSERT INTO test1.test1 (dt,field0 ,field1 ,field2 ,field3 ,field4 ,field5 ,field6 ,field7 ,field8 ,field9 ,size0 ,size1 ,size2 ,size3 ,size4 ,size5 ,size6 ,size7 ,size8 ,size9) VALUES( toTimeStamp(now()),? ,? ,? ,? ,? ,? ,? ,? ,? ,? ,? ,? ,? ,? ,? ,? ,? ,? ,? ,?)", // Query format
-				func(data [][]string) []Data { // Data builder
-					result := make([]Data, 0)
+				func(data [][]string) *Queue { // Data builder
+					queue := NewQueue(len(data))
 
 					for _, array := range data {
 						newItem := Data{}
@@ -90,10 +90,10 @@ func main() {
 						for _, item := range array {
 							newItem.fields = append(newItem.fields, []byte(item))
 						}
-						result = append(result, newItem)
+						queue.Enqueue(&newItem)
 					}
 
-					return result
+					return queue
 				},
 				func(session *gocql.Session, format string, fields []interface{}) *gocql.Query { // Query Builder
 					size := len(fields)
@@ -119,7 +119,7 @@ func main() {
 		}
 	} else if testType == 3 {
 		if createTest {
-			createTestData("test_data2.csv", 1000000, func() []string {
+			createTestData("test_data3.csv", 1000000, func() []string {
 				str := make([]string, 20)
 				for i := 0; i < 10; i++ {
 					str[i] = names[rand.Intn(len(names))] + strconv.Itoa(rand.Intn(len(names)))
@@ -131,12 +131,12 @@ func main() {
 				return str
 			})
 		} else {
-			createTableAndKeySpace("CREATE KEYSPACE IF NOT EXISTS test2 WITH REPLICATION = {'class' : 'SimpleStrategy', 'replication_factor' : 1};", "CREATE TABLE IF NOT EXISTS test2.test2(dt timestamp,data blob ,PRIMARY KEY (dt));")
+			createTableAndKeySpace("CREATE KEYSPACE IF NOT EXISTS test2 WITH REPLICATION = {'class' : 'SimpleStrategy', 'replication_factor' : 1};", "CREATE TABLE IF NOT EXISTS test2.test2(dt timestamp,data blob ,PRIMARY KEY (dt,blob));")
 
-			writeData("test_data2.csv", // Path to data
+			writeDataFromAnyFiles([]string{"test_data3.csv"}, // Path to data
 				"INSERT INTO test2.test2 (dt,data) VALUES( toTimeStamp(now()),textAsBlob(?))", // Query format
-				func(data [][]string) []Data { // Data builder
-					result := make([]Data, 0)
+				func(data [][]string) *Queue { // Data builder
+					queue := NewQueue(len(data))
 
 					for _, array := range data {
 						newItem := Data{}
@@ -144,10 +144,10 @@ func main() {
 						for _, item := range array {
 							newItem.fields = append(newItem.fields, []byte(item))
 						}
-						result = append(result, newItem)
+						queue.Enqueue(&newItem)
 					}
 
-					return result
+					return queue
 				},
 				func(session *gocql.Session, format string, fields []interface{}) *gocql.Query { // Query Builder
 					strg := ""
@@ -161,7 +161,7 @@ func main() {
 		}
 	} else if testType == 4 {
 		if createTest {
-			createTestData("test_data3.csv", 1000000, func() []string {
+			createTestData("test_data4.csv", 1000000, func() []string {
 				str := make([]string, 20)
 				for i := 0; i < 10; i++ {
 					str[i] = names[rand.Intn(len(names))] + strconv.Itoa(rand.Intn(len(names)))
@@ -173,12 +173,12 @@ func main() {
 				return str
 			})
 		} else {
-			createTableAndKeySpace("CREATE KEYSPACE IF NOT EXISTS test3 WITH REPLICATION = {'class' : 'SimpleStrategy', 'replication_factor' : 1};", "CREATE TABLE IF NOT EXISTS test3.test3(dt timestamp,data blob ,PRIMARY KEY (dt));")
+			createTableAndKeySpace("CREATE KEYSPACE IF NOT EXISTS test3 WITH REPLICATION = {'class' : 'SimpleStrategy', 'replication_factor' : 1};", "CREATE TABLE IF NOT EXISTS test3.test3(dt timestamp,data blob ,PRIMARY KEY (dt,blob));")
 
-			writeData("test_data3.csv", // Path to data
+			writeDataFromAnyFiles([]string{"test_data4.csv"}, // Path to data
 				"INSERT INTO test3.test3 (dt,data) VALUES( toTimeStamp(now()),?)", // Query format
-				func(data [][]string) []Data { // Data builder
-					result := make([]Data, 0)
+				func(data [][]string) *Queue { // Data builder
+					queue := NewQueue(len(data))
 
 					for _, array := range data {
 						msg := &ProtoTest{}
@@ -219,15 +219,58 @@ func main() {
 						item := Data{}
 						item.fields = make([]interface{}, 1)
 						item.fields[0] = msg
-						result = append(result, item)
+						queue.Enqueue(&item)
 					}
 
-					return result
+					return queue
 				},
 				func(session *gocql.Session, format string, fields []interface{}) *gocql.Query { // Query Builder
 
 					data, _ := proto.Marshal(fields[0].(*ProtoTest))
 					return session.Query(format, data)
+				})
+		}
+	} else if testType == 5 {
+		if createTest {
+			createTestData("test_data5.csv", 1000000, func() []string {
+				str := make([]string, 5)
+				str[0] = names[rand.Intn(len(names))] + strconv.Itoa(rand.Intn(len(names)))
+				str[1] = names[rand.Intn(len(names))] + strconv.Itoa(rand.Intn(len(names)))
+				str[2] = "true"
+				str[3] = "SubjectStart" + names[rand.Intn(len(names))] + names[rand.Intn(len(names))] + "SubjectEnd"
+				str[4] = strconv.Itoa(rand.Intn(len(names)))
+				return str
+			})
+		} else {
+			createTableAndKeySpace("CREATE KEYSPACE IF NOT EXISTS test5 WITH REPLICATION = {'class' : 'SimpleStrategy', 'replication_factor' : 1};", "CREATE TABLE IF NOT EXISTS test5.test5(dt timestamp,target text,contact text,direction boolean,subject text,size int,PRIMARY KEY (target, dt, direction,subject,size,contact));")
+
+			writeDataFromAnyFiles([]string{"test_data5.csv"}, // Path to data
+				"INSERT INTO test5.test5 (dt,target,contact,direction,subject,size) VALUES( toTimeStamp(now()),?,?,?,?,?)", // Query format
+				func(data [][]string) *Queue { // Data builder
+					queue := NewQueue(len(data))
+
+					for _, array := range data {
+						newItem := Data{}
+						newItem.fields = make([]interface{}, 0)
+						for _, item := range array {
+							newItem.fields = append(newItem.fields, []byte(item))
+						}
+						queue.Enqueue(&newItem)
+					}
+
+					return queue
+				},
+				func(session *gocql.Session, format string, fields []interface{}) *gocql.Query { // Query Builder
+					size := len(fields)
+					strs := make([]string, size)
+
+					for j, k := range fields {
+						strs[j] = string((k.([]byte))[:])
+					}
+					b, _ := strconv.ParseBool(strs[2])
+					u, _ := strconv.ParseUint(strs[2], 10, 64)
+
+					return session.Query(format, strs[0], strs[1], b, strs[3], u)
 				})
 		}
 	}
